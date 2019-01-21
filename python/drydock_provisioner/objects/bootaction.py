@@ -13,6 +13,7 @@
 # limitations under the License.
 """Object models for BootActions."""
 import base64
+import logging
 from jinja2 import Template
 import ulid2
 import yaml
@@ -25,6 +26,7 @@ import drydock_provisioner.objects.fields as hd_fields
 import drydock_provisioner.config as config
 import drydock_provisioner.error as errors
 
+from drydock_provisioner import config
 from drydock_provisioner.statemgmt.design.resolver import ReferenceResolver
 
 
@@ -143,6 +145,8 @@ class BootActionAsset(base.DrydockObject):
 
         super().__init__(package_list=package_list, permissions=mode, **kwargs)
         self.rendered_bytes = None
+        self.logger = logging.getLogger(
+            config.config_mgr.conf.logging.global_logger_name)
 
     def render(self, nodename, site_design, action_id, action_key, design_ref):
         """Render this asset into a base64 encoded string.
@@ -169,12 +173,13 @@ class BootActionAsset(base.DrydockObject):
             data_block = self.data.encode('utf-8')
 
         if self.type != hd_fields.BootactionAssetType.PackageList:
-            value = self.execute_pipeline(
-                data_block, self.data_pipeline, tpl_ctx=tpl_ctx)
+            if data_block is not None:
+                value = self.execute_pipeline(
+                    data_block, self.data_pipeline, tpl_ctx=tpl_ctx)
 
-            if isinstance(value, str):
-                value = value.encode('utf-8')
-            self.rendered_bytes = value
+                if isinstance(value, str):
+                    value = value.encode('utf-8')
+                self.rendered_bytes = value
 
     def _parse_package_list(self, data):
         """Parse data expecting a list of packages to install.
@@ -310,6 +315,8 @@ class BootActionAsset(base.DrydockObject):
         :param pipeline: list of pipeline segments to execute
         :param tpl_ctx: The optional context to be made available to the ``template`` pipeline
         """
+        self.logger.debug("\n\nRick execute_pipeline DEBUG data")
+        self.logger.debug(data)
         segment_funcs = {
             'base64_encode': self.eval_base64_encode,
             'base64_decode': self.eval_base64_decode,
@@ -357,6 +364,10 @@ class BootActionAsset(base.DrydockObject):
         :param data: data to be decoded
         :param ctx: throwaway, just allows a generic interface for pipeline segments
         """
+        self.logger.debug("\n\nRick eval_utf8_decode DEBUG data")
+        self.logger.debug(data)
+        self.logger.debug(type(data))
+        self.logger.debug("eval_utf8_decode END DEBUG")
         return data.decode('utf-8')
 
     def eval_utf8_encode(self, data, ctx=None):

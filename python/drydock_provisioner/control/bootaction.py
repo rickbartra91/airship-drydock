@@ -265,12 +265,14 @@ class BootactionUtils(object):
             a for a in asset_list if a.type != BootactionAssetType.PackageList
         ]
         for a in asset_list:
-            fileobj = io.BytesIO(a.rendered_bytes)
-            tarasset = tarfile.TarInfo(name=a.path)
-            tarasset.size = len(a.rendered_bytes)
-            tarasset.mode = a.permissions if a.permissions else 0o600
-            tarasset.uid = 0
-            tarasset.gid = 0
-            tarball.addfile(tarasset, fileobj=fileobj)
+            if a is not None:
+                fileobj = io.BytesIO(a.rendered_bytes)
+                tarasset = tarfile.TarInfo(name=a.path)
+                if a.rendered_bytes is not None:
+                    tarasset.size = len(a.rendered_bytes)
+                tarasset.mode = a.permissions if a.permissions else 0o600
+                tarasset.uid = 0
+                tarasset.gid = 0
+                tarball.addfile(tarasset, fileobj=fileobj)
         tarball.close()
         return tarbytes.getvalue()
