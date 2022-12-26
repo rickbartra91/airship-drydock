@@ -77,5 +77,5 @@ urllib3==1.23
 uWSGI==2.0.15
 vine==1.1.4
 WebOb==1.8.2
-wheel==0.31.1
+wheel==0.38.1
 wrapt==1.10.11
